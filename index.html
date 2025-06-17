@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stopwatch – Multicolor Dark Theme</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: "Segoe UI", sans-serif;
+        background: linear-gradient(135deg, #4b0082, #800000, #ff1493, #000080);
+        background-size: 500% 500%;
+        animation: gradientLoop 18s ease infinite;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+
+      @keyframes gradientLoop {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+
+      .container {
+        background: linear-gradient(
+          145deg,
+          rgba(255, 255, 255, 0.95),
+          rgba(240, 230, 240, 0.85)
+        );
+        padding: 40px;
+        border-radius: 20px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4),
+          0 -6px 12px rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        text-align: center;
+        width: 340px;
+        backdrop-filter: blur(12px);
+      }
+
+      h1 {
+        color: #330033;
+        margin-bottom: 20px;
+      }
+
+      .time-box {
+        background: linear-gradient(to right, #3a8dde, #5ac8fa);
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.4),
+          0 8px 16px rgba(0, 0, 0, 0.3);
+        margin-bottom: 20px;
+      }
+
+      .time {
+        font-size: 3em;
+        font-weight: 900;
+        color: white;
+        text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+      }
+
+      .buttons button {
+        margin: 8px;
+        padding: 12px 22px;
+        font-size: 1em;
+        border: none;
+        border-radius: 30px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease-in-out;
+        background: linear-gradient(135deg, #a83232, #ff6666);
+        color: white;
+        box-shadow: 0 4px 10px rgba(255, 100, 100, 0.4),
+          inset 0 -3px 6px rgba(0, 0, 0, 0.2);
+      }
+
+      .buttons button:hover {
+        transform: translateY(-2px);
+        background: linear-gradient(135deg, #ff4b2b, #ff416c);
+      }
+
+      ul#laps {
+        list-style: none;
+        padding: 0;
+        margin-top: 25px;
+        max-height: 180px;
+        overflow-y: auto;
+      }
+
+      ul#laps li {
+        background: #fff;
+        color: #555;
+        padding: 8px 12px;
+        margin: 6px auto;
+        width: 85%;
+        border-radius: 8px;
+        border: 1px solid #eee;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        animation: slideIn 0.3s ease-in-out;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Stopwatch</h1>
+      <div class="time-box">
+        <div class="time" id="display">00:00:00.000</div>
+      </div>
+      <div class="buttons">
+        <button onclick="startStop()">Start</button>
+        <button onclick="pause()">Pause</button>
+        <button onclick="reset()">Reset</button>
+        <button onclick="lap()">Lap</button>
+      </div>
+      <ul id="laps"></ul>
+    </div>
+
+    <script>
+      let startTime = 0;
+      let elapsedTime = 0;
+      let timerInterval;
+      let running = false;
+
+      const display = document.getElementById("display");
+      const laps = document.getElementById("laps");
+
+      // Web Audio API
+      let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      let oscillator = null;
+      let tickInterval = null;
+
+      function updateDisplay(time) {
+        const ms = time % 1000;
+        const totalSeconds = Math.floor(time / 1000);
+        const seconds = totalSeconds % 60;
+        const minutes = Math.floor(totalSeconds / 60) % 60;
+        const hours = Math.floor(totalSeconds / 3600);
+        display.textContent = `${pad(hours)}:${pad(minutes)}:${pad(
+          seconds
+        )}.${padMilliseconds(ms)}`;
+      }
+
+      function pad(n) {
+        return String(n).padStart(2, "0");
+      }
+
+      function padMilliseconds(ms) {
+        return String(ms).padStart(3, "0");
+      }
+
+      function startStop() {
+        if (!running) {
+          running = true;
+          startTime = Date.now() - elapsedTime;
+          timerInterval = setInterval(() => {
+            elapsedTime = Date.now() - startTime;
+            updateDisplay(elapsedTime);
+          }, 10);
+
+          startTickingFast();
+        }
+      }
+
+      function pause() {
+        if (running) {
+          running = false;
+          clearInterval(timerInterval);
+          stopTickingFast();
+        }
+      }
+
+      function reset() {
+        running = false;
+        clearInterval(timerInterval);
+        startTime = 0;
+        elapsedTime = 0;
+        updateDisplay(0);
+        laps.innerHTML = "";
+        stopTickingFast();
+      }
+
+      function lap() {
+        if (!running) return;
+        const lapTime = display.textContent;
+        const li = document.createElement("li");
+        li.textContent = `Lap: ${lapTime}`;
+        laps.appendChild(li);
+      }
+
+      function playTick() {
+        // Stop existing oscillator if needed
+        if (oscillator) {
+          oscillator.stop();
+          oscillator.disconnect();
+        }
+
+        oscillator = audioCtx.createOscillator();
+        oscillator.frequency.setValueAtTime(800, audioCtx.currentTime); // Frequency in Hz
+        oscillator.type = "square";
+
+        const gainNode = audioCtx.createGain();
+        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime); // Low volume
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.05); // Short tick duration
+      }
+
+      function startTickingFast() {
+        if (audioCtx.state === "suspended") {
+          audioCtx.resume();
+        }
+
+        playTick(); // First tick immediately
+        tickInterval = setInterval(playTick, 150); // Fast ticking every 150ms
+      }
+
+      function stopTickingFast() {
+        if (tickInterval) {
+          clearInterval(tickInterval);
+          tickInterval = null;
+        }
+
+        if (oscillator) {
+          try {
+            oscillator.stop();
+            oscillator.disconnect();
+          } catch (e) {}
+          oscillator = null;
+        }
+
+        if (audioCtx && audioCtx.state === "running") {
+          audioCtx.suspend();
+        }
+      }
+    </script>
+  </body>
+</html>
