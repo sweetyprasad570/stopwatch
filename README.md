@@ -6,7 +6,7 @@ A beautiful and responsive stopwatch app built using HTML, CSS, and JavaScript, 
 - Web Audio API ticking sound 🎵
 - Stylish glassmorphism UI 💎
 
-![Stopwatch Preview](preview.png) <!-- Replace with your screenshot file name -->
+
 ## 🌐 Live Demo
 
 👉 [View Live on GitHub Pages](https://sweetyprasad570.github.io/stopwatch/) 
@@ -26,5 +26,5 @@ A beautiful and responsive stopwatch app built using HTML, CSS, and JavaScript, 
 - **JavaScript**
 - **Web Audio API**
 
-## 📁 Folder Structure
+
 
